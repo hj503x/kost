@@ -32,6 +32,9 @@
     cursor: pointer; transition: transform .2s ease;
   }
   #themeBtn:hover { transform: rotate(-14deg); }
+  #themeBtn:focus-visible, .del:focus-visible, #addBtn:focus-visible, .export-btn:focus-visible, #clearBtn:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
   #themeBtn svg { width: 16px; height: 16px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   .header { padding: 36px 40px 20px; display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 1px dashed var(--line); }
@@ -42,10 +45,14 @@
   .date { font-size: 12px; color: var(--ink-soft); }
 
   .add-row { display: flex; align-items: center; gap: 12px; padding: 20px 40px; border-bottom: 1px dashed var(--line); }
+  .add-row.shake { animation: shake .38s ease; }
+  @keyframes shake { 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);} }
   .add-row input { background: transparent; border: none; outline: none; color: var(--ink); font-family: 'IBM Plex Sans', Arial, sans-serif; font-size: 15px; }
   .add-row input::placeholder { color: var(--ink-soft); }
   #itemName { flex: 1 1 auto; min-width: 0; }
+  #itemQty { width: 64px; }
   #itemPrice { width: 100px; text-align: right; }
+  .add-row input.invalid::placeholder { color: var(--danger); }
   #addBtn {
     width: 32px; height: 32px; min-width: 32px; border-radius: 50%; border: none;
     background: var(--accent); color: var(--surface); display: flex; align-items: center;
@@ -54,23 +61,43 @@
   #addBtn:active { transform: scale(.94); }
   #addBtn svg { width: 16px; height: 16px; stroke: var(--surface); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .list { max-height: 46vh; overflow-y: auto; }
-  .list.has-items { padding: 20px 40px 8px; }
+  .list { max-height: 50vh; overflow-y: auto; }
+  .list.has-items { padding: 18px 40px 8px; }
   .empty { text-align: center; padding: 40px 32px; color: var(--ink-soft); }
   .empty p:first-child { margin: 0; font-size: 14px; color: var(--ink); }
   .empty p:last-child { margin: 4px 0 0; font-size: 13px; }
 
+  .day-group + .day-group { margin-top: 18px; }
+  .day-label { font-size: 11px; letter-spacing: .02em; color: var(--ink-soft); margin: 0 0 6px; }
+  .day-total { font-family: 'IBM Plex Mono', monospace; }
+
   .item-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; animation: itemIn .32s ease-out both; }
   @keyframes itemIn { from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
-  .item-row .name { font-size: 14px; color: var(--ink); }
+  .item-row .name { font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; }
+  .item-row .name:hover, .item-row .price:hover, .item-row .qty-badge:hover { background: var(--line); }
+  .item-row .qty-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft);
+    cursor: text; border-radius: 3px; padding: 1px 4px; margin: -1px 0 -1px -3px;
+    white-space: nowrap;
+  }
+  .item-row .edit-input.qty-edit { width: 44px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
   .item-row .leader { flex: 1 1 auto; border-bottom: 1px dotted var(--line); transform: translateY(-4px); }
-  .item-row .price { font-size: 14px; color: var(--ink); }
+  .item-row .price { font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; }
+  .item-row .edit-input {
+    font-family: inherit; font-size: 14px; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--accent); border-radius: 3px; padding: 0 3px; outline: none;
+  }
+  .item-row .edit-input.price-edit { width: 70px; text-align: right; font-family: 'IBM Plex Mono', monospace; }
   .item-row .del {
     opacity: 0; border: none; background: none; cursor: pointer; color: var(--danger);
     display: flex; padding: 2px; transition: opacity .15s ease;
   }
   .item-row:hover .del, .item-row:focus-within .del { opacity: 1; }
   .item-row .del svg { width: 13px; height: 13px; stroke: var(--danger); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (hover: none) {
+    .item-row .del { opacity: .55; }
+  }
 
   .total-row { margin: 8px 40px 0; padding-top: 14px; border-top: 2px solid var(--ink); display: flex; justify-content: space-between; align-items: baseline; }
   .total-row .label { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 17px; color: var(--ink); }
@@ -88,6 +115,10 @@
   .export-btn:hover { border-color: var(--accent); color: var(--accent); }
   .export-btn:disabled { opacity: .45; cursor: not-allowed; }
   .export-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .item-row, .add-row.shake { animation: none !important; }
+  }
 
   @media print {
     body { background: #fff !important; padding: 0 !important; }
@@ -117,8 +148,9 @@
       <span class="date num" id="todayLabel"></span>
     </div>
 
-    <div class="add-row noprint">
+    <div class="add-row noprint" id="addRow">
       <input id="itemName" type="text" placeholder="Item" />
+      <input id="itemQty" type="text" placeholder="Qty" title="Optional — e.g. 2 or 2kg" />
       <input id="itemPrice" class="num" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
       <button id="addBtn" aria-label="Add item">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -151,9 +183,14 @@
 
 <script>
 (function () {
+  var STORAGE_KEY = "kost-items-v1";
+  var THEME_KEY = "kost-theme-v1";
+
   var items = [];
   var nextId = 1;
   var theme = "light";
+  var displayedTotal = 0;
+  var totalAnimHandle = null;
 
   var listEl = document.getElementById("list");
   var totalEl = document.getElementById("totalAmount");
@@ -162,7 +199,9 @@
   var csvBtn = document.getElementById("csvBtn");
   var pdfBtn = document.getElementById("pdfBtn");
   var nameInput = document.getElementById("itemName");
+  var qtyInput = document.getElementById("itemQty");
   var priceInput = document.getElementById("itemPrice");
+  var addRow = document.getElementById("addRow");
   var themeBtn = document.getElementById("themeBtn");
   var themeIcon = document.getElementById("themeIcon");
 
@@ -179,9 +218,76 @@
     return div.innerHTML;
   }
 
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function dayLabelFor(dateKey) {
+    if (dateKey === todayKey()) return "Today";
+    var parts = dateKey.split("-").map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  // ---------- persistence ----------
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: items, nextId: nextId }));
+    } catch (e) { /* storage unavailable — fail silently, in-memory state still works */ }
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.items)) {
+          items = parsed.items;
+          nextId = parsed.nextId || (items.reduce(function (m, it) { return Math.max(m, it.id); }, 0) + 1);
+        }
+      }
+      var savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme === "light" || savedTheme === "dark") theme = savedTheme;
+    } catch (e) { /* storage unavailable — start fresh */ }
+  }
+
+  // ---------- rendering ----------
+  function animateTotal(target) {
+    if (totalAnimHandle) cancelAnimationFrame(totalAnimHandle);
+    var start = displayedTotal;
+    var startTime = null;
+    var duration = 260;
+    function step(ts) {
+      if (startTime === null) startTime = ts;
+      var progress = Math.min(1, (ts - startTime) / duration);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var value = start + (target - start) * eased;
+      totalEl.textContent = "\u20B9" + fmt(value);
+      if (progress < 1) {
+        totalAnimHandle = requestAnimationFrame(step);
+      } else {
+        displayedTotal = target;
+      }
+    }
+    totalAnimHandle = requestAnimationFrame(step);
+  }
+
+  function groupByDay(list) {
+    var order = [];
+    var map = {};
+    list.forEach(function (it) {
+      var key = it.date || todayKey();
+      if (!map[key]) { map[key] = []; order.push(key); }
+      map[key].push(it);
+    });
+    order.sort(function (a, b) { return a < b ? 1 : -1; });
+    return order.map(function (key) { return { date: key, items: map[key] }; });
+  }
+
   function render() {
     var total = items.reduce(function (sum, it) { return sum + it.price; }, 0);
-    totalEl.textContent = "\u20B9" + fmt(total);
+    animateTotal(total);
     countEl.textContent = items.length + " item" + (items.length === 1 ? "" : "s");
     clearBtn.style.display = items.length > 0 ? "" : "none";
     csvBtn.disabled = items.length === 0;
@@ -193,15 +299,30 @@
       return;
     }
     listEl.className = "list has-items";
-    listEl.innerHTML = items.map(function (it) {
-      return '<div class="item-row" data-id="' + it.id + '">' +
-        '<span class="name">' + escapeHtml(it.name) + '</span>' +
-        '<span class="leader"></span>' +
-        '<span class="price num">\u20B9' + fmt(it.price) + '</span>' +
-        '<button class="del" aria-label="Remove ' + escapeHtml(it.name) + '">' +
-          '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-        '</button>' +
-      '</div>';
+
+    var groups = groupByDay(items);
+    var showDayHeaders = groups.length > 1;
+
+    listEl.innerHTML = groups.map(function (group) {
+      var dayTotal = group.items.reduce(function (sum, it) { return sum + it.price; }, 0);
+      var header = showDayHeaders
+        ? '<p class="day-label">' + dayLabelFor(group.date) + ' <span class="day-total num">\u20B9' + fmt(dayTotal) + '</span></p>'
+        : '';
+      var rows = group.items.map(function (it) {
+        var qtyBadge = it.qty
+          ? '<span class="qty-badge" data-field="qty" tabindex="0">' + escapeHtml(it.qty) + '</span>'
+          : '';
+        return '<div class="item-row" data-id="' + it.id + '">' +
+          qtyBadge +
+          '<span class="name" data-field="name" tabindex="0">' + escapeHtml(it.name) + '</span>' +
+          '<span class="leader"></span>' +
+          '<span class="price num" data-field="price" tabindex="0">\u20B9' + fmt(it.price) + '</span>' +
+          '<button class="del" aria-label="Remove ' + escapeHtml(it.name) + '">' +
+            '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+          '</button>' +
+        '</div>';
+      }).join("");
+      return '<div class="day-group">' + header + rows + '</div>';
     }).join("");
 
     var delButtons = listEl.querySelectorAll(".del");
@@ -210,37 +331,121 @@
         var row = e.currentTarget.closest(".item-row");
         var id = parseInt(row.getAttribute("data-id"), 10);
         items = items.filter(function (it) { return it.id !== id; });
+        save();
         render();
       });
     }
+
+    var editable = listEl.querySelectorAll("[data-field]");
+    for (var j = 0; j < editable.length; j++) {
+      editable[j].addEventListener("click", startEdit);
+      editable[j].addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); startEdit(e); }
+      });
+    }
+  }
+
+  // ---------- inline editing ----------
+  function startEdit(e) {
+    var span = e.currentTarget;
+    if (span.querySelector("input")) return; // already editing
+    var row = span.closest(".item-row");
+    var id = parseInt(row.getAttribute("data-id"), 10);
+    var item = items.find(function (it) { return it.id === id; });
+    if (!item) return;
+    var field = span.getAttribute("data-field");
+
+    var input = document.createElement("input");
+    input.className = "edit-input" + (field === "price" ? " price-edit" : field === "qty" ? " qty-edit" : "");
+    if (field === "price") {
+      input.type = "number";
+      input.step = "0.01";
+      input.min = "0";
+      input.value = item.price;
+    } else if (field === "qty") {
+      input.type = "text";
+      input.value = item.qty || "";
+      input.placeholder = "Qty";
+    } else {
+      input.type = "text";
+      input.value = item.name;
+    }
+
+    span.textContent = "";
+    span.appendChild(input);
+    input.focus();
+    input.select();
+
+    function commit() {
+      if (field === "price") {
+        var p = parseFloat(input.value);
+        if (!isNaN(p) && p >= 0) item.price = p;
+      } else if (field === "qty") {
+        item.qty = input.value.trim();
+      } else {
+        var n = input.value.trim();
+        if (n) item.name = n;
+      }
+      save();
+      render();
+    }
+
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); input.blur(); }
+      if (ev.key === "Escape") { ev.preventDefault(); render(); }
+    });
+  }
+
+  // ---------- add / clear ----------
+  function flagInvalid() {
+    addRow.classList.remove("shake");
+    void addRow.offsetWidth; // restart animation
+    addRow.classList.add("shake");
+    setTimeout(function () { addRow.classList.remove("shake"); }, 400);
   }
 
   function addItem() {
     var name = nameInput.value.trim();
     var price = parseFloat(priceInput.value);
-    if (!name || isNaN(price) || price < 0) return;
-    items.push({ id: nextId++, name: name, price: price });
+    if (!name || isNaN(price) || price < 0) {
+      flagInvalid();
+      if (!name) nameInput.classList.add("invalid"); else nameInput.classList.remove("invalid");
+      if (isNaN(price) || price < 0) priceInput.classList.add("invalid"); else priceInput.classList.remove("invalid");
+      setTimeout(function () {
+        nameInput.classList.remove("invalid");
+        priceInput.classList.remove("invalid");
+      }, 900);
+      return;
+    }
+    var qty = qtyInput.value.trim();
+    items.push({ id: nextId++, name: name, price: price, qty: qty, date: todayKey() });
     nameInput.value = "";
+    qtyInput.value = "";
     priceInput.value = "";
     nameInput.focus();
+    save();
     render();
   }
 
   document.getElementById("addBtn").addEventListener("click", addItem);
   nameInput.addEventListener("keydown", function (e) { if (e.key === "Enter") addItem(); });
+  qtyInput.addEventListener("keydown", function (e) { if (e.key === "Enter") addItem(); });
   priceInput.addEventListener("keydown", function (e) { if (e.key === "Enter") addItem(); });
 
   clearBtn.addEventListener("click", function () {
+    if (items.length && !confirm("Clear all items? This can't be undone.")) return;
     items = [];
+    save();
     render();
   });
 
   csvBtn.addEventListener("click", function () {
     var total = items.reduce(function (sum, it) { return sum + it.price; }, 0);
-    var rows = [["Item", "Price"]];
-    items.forEach(function (it) { rows.push([it.name, it.price.toFixed(2)]); });
+    var rows = [["Date", "Item", "Qty", "Price"]];
+    items.forEach(function (it) { rows.push([it.date || todayKey(), it.name, it.qty || "", it.price.toFixed(2)]); });
     rows.push([]);
-    rows.push(["Total", total.toFixed(2)]);
+    rows.push(["", "", "Total", total.toFixed(2)]);
     var csv = rows.map(function (r) {
       return r.map(function (cell) {
         var s = String(cell == null ? "" : cell);
@@ -264,10 +469,15 @@
     theme = theme === "light" ? "dark" : "light";
     document.body.setAttribute("data-theme", theme);
     themeIcon.innerHTML = theme === "light" ? MOON : SUN;
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* ignore */ }
   });
 
   document.getElementById("todayLabel").textContent = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
+  // ---------- init ----------
+  load();
+  document.body.setAttribute("data-theme", theme);
+  themeIcon.innerHTML = theme === "light" ? MOON : SUN;
   render();
 })();
 </script>
