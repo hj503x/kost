@@ -10,8 +10,8 @@
   * { box-sizing: border-box; }
   body { margin: 0; }
 
-  [data-theme="light"] { --bg:#EFEBE1; --surface:#FCFAF4; --ink:#211E18; --ink-soft:#857E6E; --line:#DCD5C2; --accent:#33513B; --danger:#A6402F; --shadow:0 24px 60px -30px rgba(33,30,24,.35); }
-  [data-theme="dark"]  { --bg:#131210; --surface:#1D1B16; --ink:#EEE9DC; --ink-soft:#8C8576; --line:#38352A; --accent:#8FBB96; --danger:#D48D78; --shadow:0 24px 60px -24px rgba(0,0,0,.6); }
+  [data-theme="light"] { --bg:#EFEBE1; --surface:#FCFAF4; --ink:#211E18; --ink-soft:#6E6858; --line:#DCD5C2; --rule:#E4DFCF; --accent:#33513B; --accent-soft:#EDF2EC; --danger:#A6402F; --danger-soft:#F7E9E5; --shadow:0 24px 60px -30px rgba(33,30,24,.35); }
+  [data-theme="dark"]  { --bg:#131210; --surface:#1D1B16; --ink:#EEE9DC; --ink-soft:#9A927F; --line:#38352A; --rule:#28251D; --accent:#8FBB96; --accent-soft:#22291F; --danger:#D48D78; --danger-soft:#2C201B; --shadow:0 24px 60px -24px rgba(0,0,0,.6); }
 
   html, body { height: 100%; }
   body {
@@ -21,6 +21,7 @@
   }
   .wrap { width: 100%; max-width: 640px; }
   .num { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+  .serif { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; }
 
   .card { background: var(--surface); box-shadow: var(--shadow); animation: rise .55s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes rise { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
@@ -32,7 +33,9 @@
     cursor: pointer; transition: transform .2s ease;
   }
   #themeBtn:hover { transform: rotate(-14deg); }
-  #themeBtn:focus-visible, .del:focus-visible, #addBtn:focus-visible, .export-btn:focus-visible, #clearBtn:focus-visible {
+  #themeBtn:focus-visible, .del:focus-visible, #addBtn:focus-visible, .export-btn:focus-visible,
+  #clearBtn:focus-visible, .day-toggle:focus-visible, #dateToggle:focus-visible, #searchInput:focus-visible,
+  .undo-btn:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 2px;
   }
   #themeBtn svg { width: 16px; height: 16px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -44,32 +47,68 @@
   .tagline { margin: 6px 0 0; font-size: 13px; color: var(--ink-soft); }
   .date { font-size: 12px; color: var(--ink-soft); }
 
-  .add-row { display: flex; align-items: center; gap: 12px; padding: 20px 40px; border-bottom: 1px dashed var(--line); }
+  /* ---- stats strip: today / week / month rollups ---- */
+  .stats { display: flex; border-bottom: 1px dashed var(--line); }
+  .stats .stat { flex: 1; padding: 16px 12px; text-align: center; border-right: 1px dashed var(--line); }
+  .stats .stat:last-child { border-right: none; }
+  .stats .stat .stat-label { font-size: 11px; color: var(--ink-soft); margin: 0 0 4px; }
+  .stats .stat .stat-amount { font-size: 15px; color: var(--ink); font-weight: 600; }
+
+  .add-row { display: flex; align-items: center; gap: 10px; padding: 20px 40px; border-bottom: 1px dashed var(--line); flex-wrap: wrap; }
   .add-row.shake { animation: shake .38s ease; }
   @keyframes shake { 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);} }
   .add-row input { background: transparent; border: none; outline: none; color: var(--ink); font-family: 'IBM Plex Sans', Arial, sans-serif; font-size: 15px; }
   .add-row input::placeholder { color: var(--ink-soft); }
-  #itemName { flex: 1 1 auto; min-width: 0; }
-  #itemQty { width: 64px; }
-  #itemPrice { width: 100px; text-align: right; }
+  #itemName { flex: 1 1 auto; min-width: 90px; }
+  #itemQty { width: 58px; }
+  #itemPrice { width: 92px; text-align: right; }
   .add-row input.invalid::placeholder { color: var(--danger); }
-  #addBtn {
+  #dateToggle, #addBtn {
     width: 32px; height: 32px; min-width: 32px; border-radius: 50%; border: none;
-    background: var(--accent); color: var(--surface); display: flex; align-items: center;
-    justify-content: center; cursor: pointer; transition: transform .15s ease;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .15s ease;
   }
-  #addBtn:active { transform: scale(.94); }
+  #dateToggle { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); }
+  #dateToggle.active { border-color: var(--accent); color: var(--accent); }
+  #dateToggle svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #addBtn { background: var(--accent); color: var(--surface); }
+  #addBtn:active, #dateToggle:active { transform: scale(.94); }
   #addBtn svg { width: 16px; height: 16px; stroke: var(--surface); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .date-row { display: none; padding: 0 40px 16px; margin-top: -8px; border-bottom: 1px dashed var(--line); }
+  .date-row.open { display: block; padding-bottom: 16px; }
+  .date-row input[type="date"] {
+    font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; outline: none;
+  }
+  .date-row label { font-size: 12px; color: var(--ink-soft); margin-right: 8px; }
 
-  .list { max-height: 50vh; overflow-y: auto; }
+  .search-row { padding: 14px 40px 0; }
+  .search-row input {
+    width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; font-size: 13px; color: var(--ink); outline: none; font-family: inherit;
+  }
+  .search-row input:focus { border-color: var(--accent); }
+  .search-row input::placeholder { color: var(--ink-soft); }
+
+  .list { max-height: 55vh; overflow-y: auto; background-image: repeating-linear-gradient(to bottom, transparent, transparent 33px, var(--rule) 34px); background-position: 0 4px; }
   .list.has-items { padding: 18px 40px 8px; }
   .empty { text-align: center; padding: 40px 32px; color: var(--ink-soft); }
   .empty p:first-child { margin: 0; font-size: 14px; color: var(--ink); }
   .empty p:last-child { margin: 4px 0 0; font-size: 13px; }
+  .no-results { text-align: center; padding: 28px 32px; color: var(--ink-soft); font-size: 13px; }
 
-  .day-group + .day-group { margin-top: 18px; }
-  .day-label { font-size: 11px; letter-spacing: .02em; color: var(--ink-soft); margin: 0 0 6px; }
-  .day-total { font-family: 'IBM Plex Mono', monospace; }
+  .day-group + .day-group { margin-top: 6px; }
+  .day-header {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 6px;
+    cursor: pointer; padding: 4px 0; user-select: none;
+  }
+  .day-header .day-left { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+  .day-toggle { border: none; background: none; padding: 0; cursor: pointer; display: flex; color: var(--ink-soft); flex: none; }
+  .day-toggle svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s ease; }
+  .day-group.collapsed .day-toggle svg { transform: rotate(-90deg); }
+  .day-label { font-size: 13px; color: var(--ink); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day-total { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); flex: none; }
+  .day-items { overflow: hidden; }
+  .day-group.collapsed .day-items { display: none; }
 
   .item-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; animation: itemIn .32s ease-out both; }
   @keyframes itemIn { from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
@@ -82,7 +121,8 @@
   }
   .item-row .edit-input.qty-edit { width: 44px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
   .item-row .leader { flex: 1 1 auto; border-bottom: 1px dotted var(--line); transform: translateY(-4px); }
-  .item-row .price { font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; }
+  .item-row .price { font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; white-space: nowrap; }
+  .item-row .price .unit { color: var(--ink-soft); font-size: 12px; margin-right: 4px; }
   .item-row .edit-input {
     font-family: inherit; font-size: 14px; color: var(--ink); background: var(--bg);
     border: 1px solid var(--accent); border-radius: 3px; padding: 0 3px; outline: none;
@@ -103,7 +143,7 @@
   .total-row .label { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 17px; color: var(--ink); }
   .total-row .amount { font-size: 22px; font-weight: 600; color: var(--accent); }
 
-  .footer { display: flex; justify-content: space-between; align-items: center; padding: 10px 40px 32px; flex-wrap: wrap; gap: 10px; }
+  .footer { display: flex; justify-content: space-between; align-items: center; padding: 10px 40px 28px; flex-wrap: wrap; gap: 10px; }
   .count { font-size: 12px; color: var(--ink-soft); }
   .actions { display: flex; align-items: center; gap: 16px; }
   #clearBtn { border: none; background: none; cursor: pointer; font-size: 12px; color: var(--ink-soft); text-decoration: underline; padding: 0; }
@@ -116,15 +156,37 @@
   .export-btn:disabled { opacity: .45; cursor: not-allowed; }
   .export-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
+  .export-note { text-align: center; font-size: 11px; color: var(--ink-soft); padding: 0 40px 22px; margin-top: -8px; }
+
+  /* ---- undo toast ---- */
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 12px); opacity: 0;
+    pointer-events: none; background: var(--ink); color: var(--surface); font-size: 13px;
+    padding: 10px 10px 10px 16px; border-radius: 999px; display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 12px 30px -10px rgba(0,0,0,.4); transition: opacity .2s ease, transform .2s ease; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast .undo-btn { border: none; background: var(--accent); color: var(--surface); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+
   @media (prefers-reduced-motion: reduce) {
     .card, .item-row, .add-row.shake { animation: none !important; }
+  }
+
+  @media (max-width: 420px) {
+    .stats .stat { padding: 12px 6px; }
+    .stats .stat-label { font-size: 10px; }
+    .stats .stat-amount { font-size: 13px; }
+    .header, .add-row, .list.has-items, .total-row, .footer, .search-row, .date-row { padding-left: 22px; padding-right: 22px; }
+    .total-row { margin-left: 22px; margin-right: 22px; }
   }
 
   @media print {
     body { background: #fff !important; padding: 0 !important; }
     .noprint { display: none !important; }
-    .list { max-height: none !important; overflow: visible !important; }
+    .list { max-height: none !important; overflow: visible !important; background-image: none !important; }
+    .day-group.collapsed .day-items { display: block !important; }
     .card { box-shadow: none !important; animation: none !important; }
+    [data-theme] { --surface:#fff; --ink:#000; --ink-soft:#555; --bg:#fff; --line:#ccc; --rule:#eee; --accent:#000; }
   }
 </style>
 </head>
@@ -148,19 +210,36 @@
       <span class="date num" id="todayLabel"></span>
     </div>
 
+    <div class="stats noprint" id="statsRow" style="display:none;">
+      <div class="stat"><p class="stat-label">Today</p><p class="stat-amount num" id="statToday">₹0.00</p></div>
+      <div class="stat"><p class="stat-label">This week</p><p class="stat-amount num" id="statWeek">₹0.00</p></div>
+      <div class="stat"><p class="stat-label">This month</p><p class="stat-amount num" id="statMonth">₹0.00</p></div>
+    </div>
+
     <div class="add-row noprint" id="addRow">
       <input id="itemName" type="text" placeholder="Item" />
-      <input id="itemQty" type="text" placeholder="Qty" title="Optional — e.g. 2 or 2kg" />
+      <input id="itemQty" type="text" placeholder="Qty" title="Optional — a number multiplies the price (e.g. 2), text is just a note (e.g. 2kg)" />
       <input id="itemPrice" class="num" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
+      <button id="dateToggle" aria-label="Backdate this entry" title="Backdate this entry">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </button>
       <button id="addBtn" aria-label="Add item">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
+    </div>
+    <div class="date-row noprint" id="dateRow">
+      <label for="itemDate">Entry date</label>
+      <input type="date" id="itemDate" />
+    </div>
+
+    <div class="search-row noprint" id="searchRow" style="display:none;">
+      <input id="searchInput" type="text" placeholder="Search items…" />
     </div>
 
     <div class="list" id="list"></div>
 
     <div class="total-row">
-      <span class="label">Total</span>
+      <span class="label serif">Total</span>
       <span class="amount num" id="totalAmount">₹0.00</span>
     </div>
 
@@ -178,19 +257,33 @@
         </button>
       </div>
     </div>
+    <p class="export-note noprint" id="exportNote" style="display:none;"></p>
   </div>
+</div>
+
+<div class="toast noprint" id="toast">
+  <span id="toastMsg">Item removed</span>
+  <button class="undo-btn" id="undoBtn">Undo</button>
 </div>
 
 <script>
 (function () {
   var STORAGE_KEY = "kost-items-v1";
   var THEME_KEY = "kost-theme-v1";
+  var EXPORT_KEY = "kost-last-export-v1";
+  var COLLAPSE_KEY = "kost-collapsed-days-v1";
+  var SEARCH_THRESHOLD = 15;
 
   var items = [];
   var nextId = 1;
   var theme = "light";
   var displayedTotal = 0;
   var totalAnimHandle = null;
+  var collapsedDays = {};
+  var searchTerm = "";
+  var lastExportAt = null;
+
+  var pendingDelete = null; // { item, timeout }
 
   var listEl = document.getElementById("list");
   var totalEl = document.getElementById("totalAmount");
@@ -201,12 +294,26 @@
   var nameInput = document.getElementById("itemName");
   var qtyInput = document.getElementById("itemQty");
   var priceInput = document.getElementById("itemPrice");
+  var dateInput = document.getElementById("itemDate");
   var addRow = document.getElementById("addRow");
+  var dateRow = document.getElementById("dateRow");
+  var dateToggle = document.getElementById("dateToggle");
   var themeBtn = document.getElementById("themeBtn");
   var themeIcon = document.getElementById("themeIcon");
+  var statsRow = document.getElementById("statsRow");
+  var statToday = document.getElementById("statToday");
+  var statWeek = document.getElementById("statWeek");
+  var statMonth = document.getElementById("statMonth");
+  var searchRow = document.getElementById("searchRow");
+  var searchInput = document.getElementById("searchInput");
+  var exportNote = document.getElementById("exportNote");
+  var toast = document.getElementById("toast");
+  var toastMsg = document.getElementById("toastMsg");
+  var undoBtn = document.getElementById("undoBtn");
 
   var MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
   var SUN = '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>';
+  var CHEVRON = '<polyline points="6 9 12 15 18 9"/>';
 
   function fmt(n) {
     return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -218,16 +325,38 @@
     return div.innerHTML;
   }
 
-  function todayKey() {
-    var d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function keyFor(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+
+  function todayKey() { return keyFor(new Date()); }
+
+  function parseKey(dateKey) {
+    var parts = dateKey.split("-").map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
   }
 
   function dayLabelFor(dateKey) {
-    if (dateKey === todayKey()) return "Today";
-    var parts = dateKey.split("-").map(Number);
-    var d = new Date(parts[0], parts[1] - 1, parts[2]);
-    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    var today = todayKey();
+    if (dateKey === today) return "Today";
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (dateKey === keyFor(yesterday)) return "Yesterday";
+    return parseKey(dateKey).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  // qty that is purely numeric acts as a multiplier on price; anything else (e.g. "2kg") is just a note
+  function qtyMultiplier(qty) {
+    if (!qty) return null;
+    var trimmed = String(qty).trim();
+    if (!/^\d+(\.\d+)?$/.test(trimmed)) return null;
+    var n = parseFloat(trimmed);
+    return n > 0 ? n : null;
+  }
+
+  function lineTotal(it) {
+    var m = qtyMultiplier(it.qty);
+    return m ? m * it.price : it.price;
   }
 
   // ---------- persistence ----------
@@ -248,8 +377,39 @@
         }
       }
       var savedTheme = localStorage.getItem(THEME_KEY);
-      if (savedTheme === "light" || savedTheme === "dark") theme = savedTheme;
+      if (savedTheme === "light" || savedTheme === "dark") {
+        theme = savedTheme;
+      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        theme = "dark";
+      }
+      var savedExport = localStorage.getItem(EXPORT_KEY);
+      if (savedExport) lastExportAt = new Date(savedExport);
+      var savedCollapse = localStorage.getItem(COLLAPSE_KEY);
+      if (savedCollapse) { try { collapsedDays = JSON.parse(savedCollapse); } catch (e2) {} }
     } catch (e) { /* storage unavailable — start fresh */ }
+  }
+
+  function saveCollapse() {
+    try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapsedDays)); } catch (e) {}
+  }
+
+  function markExported() {
+    lastExportAt = new Date();
+    try { localStorage.setItem(EXPORT_KEY, lastExportAt.toISOString()); } catch (e) {}
+    renderExportNote();
+  }
+
+  function renderExportNote() {
+    if (!items.length) { exportNote.style.display = "none"; return; }
+    if (!lastExportAt) {
+      exportNote.style.display = "";
+      exportNote.textContent = "Not exported yet — back this up with CSV once in a while.";
+      return;
+    }
+    var days = Math.floor((Date.now() - lastExportAt.getTime()) / 86400000);
+    if (days < 1) { exportNote.style.display = "none"; return; }
+    exportNote.style.display = "";
+    exportNote.textContent = "Last exported " + days + " day" + (days === 1 ? "" : "s") + " ago — everything lives only on this device.";
   }
 
   // ---------- rendering ----------
@@ -285,13 +445,43 @@
     return order.map(function (key) { return { date: key, items: map[key] }; });
   }
 
+  function renderStats() {
+    if (!items.length) { statsRow.style.display = "none"; return; }
+    statsRow.style.display = "flex";
+    var now = new Date();
+    var todayK = todayKey();
+    var weekAgo = new Date(); weekAgo.setDate(now.getDate() - 6);
+    var monthKeyPrefix = now.getFullYear() + "-" + pad(now.getMonth() + 1);
+
+    var todaySum = 0, weekSum = 0, monthSum = 0;
+    items.forEach(function (it) {
+      var key = it.date || todayK;
+      var total = lineTotal(it);
+      if (key === todayK) todaySum += total;
+      var d = parseKey(key);
+      if (d >= new Date(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate())) weekSum += total;
+      if (key.indexOf(monthKeyPrefix) === 0) monthSum += total;
+    });
+    statToday.textContent = "\u20B9" + fmt(todaySum);
+    statWeek.textContent = "\u20B9" + fmt(weekSum);
+    statMonth.textContent = "\u20B9" + fmt(monthSum);
+  }
+
+  function matchesSearch(it) {
+    if (!searchTerm) return true;
+    return it.name.toLowerCase().indexOf(searchTerm) !== -1;
+  }
+
   function render() {
-    var total = items.reduce(function (sum, it) { return sum + it.price; }, 0);
+    var total = items.reduce(function (sum, it) { return sum + lineTotal(it); }, 0);
     animateTotal(total);
     countEl.textContent = items.length + " item" + (items.length === 1 ? "" : "s");
     clearBtn.style.display = items.length > 0 ? "" : "none";
     csvBtn.disabled = items.length === 0;
     pdfBtn.disabled = items.length === 0;
+    searchRow.style.display = items.length > SEARCH_THRESHOLD ? "" : "none";
+    renderStats();
+    renderExportNote();
 
     if (items.length === 0) {
       listEl.className = "list";
@@ -302,48 +492,114 @@
 
     var groups = groupByDay(items);
     var showDayHeaders = groups.length > 1;
+    var visibleGroups = groups.map(function (g) {
+      return { date: g.date, items: g.items.filter(matchesSearch) };
+    }).filter(function (g) { return g.items.length > 0; });
 
-    listEl.innerHTML = groups.map(function (group) {
-      var dayTotal = group.items.reduce(function (sum, it) { return sum + it.price; }, 0);
+    if (searchTerm && visibleGroups.length === 0) {
+      listEl.innerHTML = '<div class="no-results">No items match "' + escapeHtml(searchTerm) + '".</div>';
+      return;
+    }
+
+    listEl.innerHTML = visibleGroups.map(function (group, idx) {
+      var dayTotal = group.items.reduce(function (sum, it) { return sum + lineTotal(it); }, 0);
+      // default: today + yesterday expanded, everything else collapsed on first encounter
+      if (!(group.date in collapsedDays)) {
+        collapsedDays[group.date] = idx >= 2;
+      }
+      var isCollapsed = showDayHeaders && collapsedDays[group.date] && !searchTerm;
       var header = showDayHeaders
-        ? '<p class="day-label">' + dayLabelFor(group.date) + ' <span class="day-total num">\u20B9' + fmt(dayTotal) + '</span></p>'
+        ? '<div class="day-header" data-date="' + group.date + '">' +
+            '<span class="day-left">' +
+              '<button class="day-toggle" aria-label="Toggle day">' +
+                '<svg viewBox="0 0 24 24">' + CHEVRON + '</svg>' +
+              '</button>' +
+              '<span class="day-label serif">' + escapeHtml(dayLabelFor(group.date)) + '</span>' +
+            '</span>' +
+            '<span class="day-total num">\u20B9' + fmt(dayTotal) + '</span>' +
+          '</div>'
         : '';
       var rows = group.items.map(function (it) {
         var qtyBadge = it.qty
           ? '<span class="qty-badge" data-field="qty" tabindex="0">' + escapeHtml(it.qty) + '</span>'
           : '';
+        var mult = qtyMultiplier(it.qty);
+        var priceDisplay = mult
+          ? '<span class="unit">' + mult + '&times;\u20B9' + fmt(it.price) + ' =</span>\u20B9' + fmt(mult * it.price)
+          : '\u20B9' + fmt(it.price);
         return '<div class="item-row" data-id="' + it.id + '">' +
           qtyBadge +
           '<span class="name" data-field="name" tabindex="0">' + escapeHtml(it.name) + '</span>' +
           '<span class="leader"></span>' +
-          '<span class="price num" data-field="price" tabindex="0">\u20B9' + fmt(it.price) + '</span>' +
+          '<span class="price num" data-field="price" tabindex="0">' + priceDisplay + '</span>' +
           '<button class="del" aria-label="Remove ' + escapeHtml(it.name) + '">' +
             '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
           '</button>' +
         '</div>';
       }).join("");
-      return '<div class="day-group">' + header + rows + '</div>';
+      return '<div class="day-group' + (isCollapsed ? " collapsed" : "") + '">' + header +
+        '<div class="day-items">' + rows + '</div></div>';
     }).join("");
+
+    saveCollapse();
+
+    var toggles = listEl.querySelectorAll(".day-header");
+    for (var t = 0; t < toggles.length; t++) {
+      toggles[t].addEventListener("click", function (e) {
+        var date = e.currentTarget.getAttribute("data-date");
+        collapsedDays[date] = !collapsedDays[date];
+        saveCollapse();
+        render();
+      });
+    }
 
     var delButtons = listEl.querySelectorAll(".del");
     for (var i = 0; i < delButtons.length; i++) {
       delButtons[i].addEventListener("click", function (e) {
+        e.stopPropagation();
         var row = e.currentTarget.closest(".item-row");
         var id = parseInt(row.getAttribute("data-id"), 10);
-        items = items.filter(function (it) { return it.id !== id; });
-        save();
-        render();
+        deleteItem(id);
       });
     }
 
     var editable = listEl.querySelectorAll("[data-field]");
     for (var j = 0; j < editable.length; j++) {
-      editable[j].addEventListener("click", startEdit);
+      editable[j].addEventListener("click", function (e) { e.stopPropagation(); startEdit(e); });
       editable[j].addEventListener("keydown", function (e) {
-        if (e.key === "Enter") { e.preventDefault(); startEdit(e); }
+        if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); startEdit(e); }
       });
     }
   }
+
+  // ---------- delete with undo ----------
+  var toastTimeout = null;
+  function deleteItem(id) {
+    var idx = items.findIndex(function (it) { return it.id === id; });
+    if (idx === -1) return;
+    var removed = items[idx];
+    var removedIdx = idx;
+    items = items.filter(function (it) { return it.id !== id; });
+    save();
+    render();
+
+    pendingDelete = { item: removed, index: removedIdx };
+    toastMsg.textContent = '"' + (removed.name.length > 24 ? removed.name.slice(0, 24) + '…' : removed.name) + '" removed';
+    toast.classList.add("show");
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(function () { toast.classList.remove("show"); pendingDelete = null; }, 5000);
+  }
+
+  undoBtn.addEventListener("click", function () {
+    if (!pendingDelete) return;
+    clearTimeout(toastTimeout);
+    var insertAt = Math.min(pendingDelete.index, items.length);
+    items.splice(insertAt, 0, pendingDelete.item);
+    pendingDelete = null;
+    toast.classList.remove("show");
+    save();
+    render();
+  });
 
   // ---------- inline editing ----------
   function startEdit(e) {
@@ -397,6 +653,20 @@
     });
   }
 
+  // ---------- search ----------
+  searchInput.addEventListener("input", function () {
+    searchTerm = searchInput.value.trim().toLowerCase();
+    render();
+  });
+
+  // ---------- backdating ----------
+  dateToggle.addEventListener("click", function () {
+    var willOpen = !dateRow.classList.contains("open");
+    dateRow.classList.toggle("open", willOpen);
+    dateToggle.classList.toggle("active", willOpen);
+    if (willOpen && !dateInput.value) dateInput.value = todayKey();
+  });
+
   // ---------- add / clear ----------
   function flagInvalid() {
     addRow.classList.remove("shake");
@@ -419,7 +689,9 @@
       return;
     }
     var qty = qtyInput.value.trim();
-    items.push({ id: nextId++, name: name, price: price, qty: qty, date: todayKey() });
+    var entryDate = (dateRow.classList.contains("open") && dateInput.value) ? dateInput.value : todayKey();
+    if (entryDate in collapsedDays) delete collapsedDays[entryDate]; // let a fresh entry's day expand
+    items.push({ id: nextId++, name: name, price: price, qty: qty, date: entryDate });
     nameInput.value = "";
     qtyInput.value = "";
     priceInput.value = "";
@@ -436,16 +708,18 @@
   clearBtn.addEventListener("click", function () {
     if (items.length && !confirm("Clear all items? This can't be undone.")) return;
     items = [];
+    collapsedDays = {};
+    saveCollapse();
     save();
     render();
   });
 
   csvBtn.addEventListener("click", function () {
-    var total = items.reduce(function (sum, it) { return sum + it.price; }, 0);
-    var rows = [["Date", "Item", "Qty", "Price"]];
-    items.forEach(function (it) { rows.push([it.date || todayKey(), it.name, it.qty || "", it.price.toFixed(2)]); });
+    var total = items.reduce(function (sum, it) { return sum + lineTotal(it); }, 0);
+    var rows = [["Date", "Item", "Qty", "Unit Price", "Line Total"]];
+    items.forEach(function (it) { rows.push([it.date || todayKey(), it.name, it.qty || "", it.price.toFixed(2), lineTotal(it).toFixed(2)]); });
     rows.push([]);
-    rows.push(["", "", "Total", total.toFixed(2)]);
+    rows.push(["", "", "", "Total", total.toFixed(2)]);
     var csv = rows.map(function (r) {
       return r.map(function (cell) {
         var s = String(cell == null ? "" : cell);
@@ -461,9 +735,16 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    markExported();
   });
 
-  pdfBtn.addEventListener("click", function () { window.print(); });
+  pdfBtn.addEventListener("click", function () {
+    var openGroups = Object.keys(collapsedDays).filter(function (k) { return collapsedDays[k]; });
+    openGroups.forEach(function (k) { collapsedDays[k] = false; });
+    render();
+    window.print();
+    markExported();
+  });
 
   themeBtn.addEventListener("click", function () {
     theme = theme === "light" ? "dark" : "light";
