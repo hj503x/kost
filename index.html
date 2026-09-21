@@ -33,7 +33,7 @@
     cursor: pointer; transition: transform .2s ease;
   }
   #themeBtn:hover { transform: rotate(-14deg); }
-  #themeBtn:focus-visible, .del:focus-visible, #addBtn:focus-visible, .export-btn:focus-visible,
+  #themeBtn:focus-visible, .del:focus-visible, .date-edit-btn:focus-visible, #addBtn:focus-visible, .export-btn:focus-visible,
   #clearBtn:focus-visible, .day-toggle:focus-visible, #dateToggle:focus-visible, #searchInput:focus-visible,
   .undo-btn:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 2px;
@@ -112,31 +112,44 @@
 
   .item-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; animation: itemIn .32s ease-out both; }
   @keyframes itemIn { from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
-  .item-row .name { font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; }
+  .item-row .name {
+    font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px;
+    max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    border-bottom: 1px dotted var(--line);
+  }
   .item-row .name:hover, .item-row .price:hover, .item-row .qty-badge:hover { background: var(--line); }
   .item-row .qty-badge {
     font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft);
     cursor: text; border-radius: 3px; padding: 1px 4px; margin: -1px 0 -1px -3px;
-    white-space: nowrap;
+    white-space: nowrap; border-bottom: 1px dotted var(--line);
   }
   .item-row .edit-input.qty-edit { width: 44px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
   .item-row .leader { flex: 1 1 auto; border-bottom: 1px dotted var(--line); transform: translateY(-4px); }
-  .item-row .price { font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; white-space: nowrap; }
+  .item-row .price { font-size: 14px; color: var(--ink); cursor: text; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; white-space: nowrap; border-bottom: 1px dotted var(--line); }
   .item-row .price .unit { color: var(--ink-soft); font-size: 12px; margin-right: 4px; }
   .item-row .edit-input {
     font-family: inherit; font-size: 14px; color: var(--ink); background: var(--bg);
     border: 1px solid var(--accent); border-radius: 3px; padding: 0 3px; outline: none;
   }
   .item-row .edit-input.price-edit { width: 70px; text-align: right; font-family: 'IBM Plex Mono', monospace; }
-  .item-row .del {
-    opacity: 0; border: none; background: none; cursor: pointer; color: var(--danger);
+  .item-row .edit-input.invalid-shake { animation: shake .38s ease; border-color: var(--danger); }
+  .item-row .del, .item-row .date-edit-btn {
+    opacity: 0; border: none; background: none; cursor: pointer;
     display: flex; padding: 2px; transition: opacity .15s ease;
   }
-  .item-row:hover .del, .item-row:focus-within .del { opacity: 1; }
+  .item-row .del { color: var(--danger); }
+  .item-row .date-edit-btn { color: var(--ink-soft); }
+  .item-row:hover .del, .item-row:focus-within .del,
+  .item-row:hover .date-edit-btn, .item-row:focus-within .date-edit-btn { opacity: 1; }
   .item-row .del svg { width: 13px; height: 13px; stroke: var(--danger); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .item-row .date-edit-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .item-row .date-edit-input {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; width: 118px; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--accent); border-radius: 3px; padding: 1px 3px; outline: none;
+  }
 
   @media (hover: none) {
-    .item-row .del { opacity: .55; }
+    .item-row .del, .item-row .date-edit-btn { opacity: .55; }
   }
 
   .total-row { margin: 8px 40px 0; padding-top: 14px; border-top: 2px solid var(--ink); display: flex; justify-content: space-between; align-items: baseline; }
@@ -157,6 +170,7 @@
   .export-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   .export-note { text-align: center; font-size: 11px; color: var(--ink-soft); padding: 0 40px 22px; margin-top: -8px; }
+  .storage-warning { text-align: center; font-size: 11px; color: var(--danger); background: var(--danger-soft); padding: 8px 16px; margin: 0 40px 22px; border-radius: 6px; }
 
   /* ---- undo toast ---- */
   .toast {
@@ -169,7 +183,7 @@
   .toast .undo-btn { border: none; background: var(--accent); color: var(--surface); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
 
   @media (prefers-reduced-motion: reduce) {
-    .card, .item-row, .add-row.shake { animation: none !important; }
+    .card, .item-row, .add-row.shake, .invalid-shake { animation: none !important; }
   }
 
   @media (max-width: 420px) {
@@ -255,9 +269,19 @@
           <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           PDF
         </button>
+        <button class="export-btn" id="jsonBtn" disabled title="Full backup you can re-import later">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Backup
+        </button>
+        <button class="export-btn" id="importBtn" title="Restore from a backup file">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Restore
+        </button>
+        <input type="file" id="importFile" accept="application/json" style="display:none;" />
       </div>
     </div>
     <p class="export-note noprint" id="exportNote" style="display:none;"></p>
+    <p class="storage-warning noprint" id="storageWarning" style="display:none;">Changes aren't being saved on this device — your data may be lost on refresh.</p>
   </div>
 </div>
 
@@ -277,6 +301,7 @@
   var items = [];
   var nextId = 1;
   var theme = "light";
+  var themeIsManual = false;
   var displayedTotal = 0;
   var totalAnimHandle = null;
   var collapsedDays = {};
@@ -284,6 +309,7 @@
   var lastExportAt = null;
 
   var pendingDelete = null; // { item, timeout }
+  var storageWarned = false;
 
   var listEl = document.getElementById("list");
   var totalEl = document.getElementById("totalAmount");
@@ -291,6 +317,9 @@
   var clearBtn = document.getElementById("clearBtn");
   var csvBtn = document.getElementById("csvBtn");
   var pdfBtn = document.getElementById("pdfBtn");
+  var jsonBtn = document.getElementById("jsonBtn");
+  var importBtn = document.getElementById("importBtn");
+  var importFile = document.getElementById("importFile");
   var nameInput = document.getElementById("itemName");
   var qtyInput = document.getElementById("itemQty");
   var priceInput = document.getElementById("itemPrice");
@@ -363,7 +392,17 @@
   function save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: items, nextId: nextId }));
-    } catch (e) { /* storage unavailable — fail silently, in-memory state still works */ }
+      if (storageWarned) {
+        storageWarned = false;
+        document.getElementById("storageWarning").style.display = "none";
+      }
+    } catch (e) {
+      // storage unavailable (private browsing, quota full, etc.) — in-memory state still works this session
+      if (!storageWarned) {
+        storageWarned = true;
+        document.getElementById("storageWarning").style.display = "";
+      }
+    }
   }
 
   function load() {
@@ -379,6 +418,7 @@
       var savedTheme = localStorage.getItem(THEME_KEY);
       if (savedTheme === "light" || savedTheme === "dark") {
         theme = savedTheme;
+        themeIsManual = true;
       } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
         theme = "dark";
       }
@@ -469,7 +509,8 @@
 
   function matchesSearch(it) {
     if (!searchTerm) return true;
-    return it.name.toLowerCase().indexOf(searchTerm) !== -1;
+    if (it.name.toLowerCase().indexOf(searchTerm) !== -1) return true;
+    return !!(it.qty && String(it.qty).toLowerCase().indexOf(searchTerm) !== -1);
   }
 
   function render() {
@@ -479,6 +520,7 @@
     clearBtn.style.display = items.length > 0 ? "" : "none";
     csvBtn.disabled = items.length === 0;
     pdfBtn.disabled = items.length === 0;
+    jsonBtn.disabled = items.length === 0;
     searchRow.style.display = items.length > SEARCH_THRESHOLD ? "" : "none";
     renderStats();
     renderExportNote();
@@ -532,6 +574,9 @@
           '<span class="name" data-field="name" tabindex="0">' + escapeHtml(it.name) + '</span>' +
           '<span class="leader"></span>' +
           '<span class="price num" data-field="price" tabindex="0">' + priceDisplay + '</span>' +
+          '<button class="date-edit-btn" aria-label="Change date" title="Change date">' +
+            '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+          '</button>' +
           '<button class="del" aria-label="Remove ' + escapeHtml(it.name) + '">' +
             '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
           '</button>' +
@@ -550,6 +595,14 @@
         collapsedDays[date] = !collapsedDays[date];
         saveCollapse();
         render();
+      });
+    }
+
+    var dateEditButtons = listEl.querySelectorAll(".date-edit-btn");
+    for (var d = 0; d < dateEditButtons.length; d++) {
+      dateEditButtons[d].addEventListener("click", function (e) {
+        e.stopPropagation();
+        startDateEdit(e);
       });
     }
 
@@ -587,7 +640,7 @@
     toastMsg.textContent = '"' + (removed.name.length > 24 ? removed.name.slice(0, 24) + '…' : removed.name) + '" removed';
     toast.classList.add("show");
     clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(function () { toast.classList.remove("show"); pendingDelete = null; }, 5000);
+    toastTimeout = setTimeout(function () { toast.classList.remove("show"); pendingDelete = null; }, 8000);
   }
 
   undoBtn.addEventListener("click", function () {
@@ -602,6 +655,14 @@
   });
 
   // ---------- inline editing ----------
+  function flagInvalidEdit(input) {
+    input.classList.remove("invalid-shake");
+    void input.offsetWidth; // restart animation
+    input.classList.add("invalid-shake");
+    input.focus();
+    input.select();
+  }
+
   function startEdit(e) {
     var span = e.currentTarget;
     if (span.querySelector("input")) return; // already editing
@@ -635,12 +696,53 @@
     function commit() {
       if (field === "price") {
         var p = parseFloat(input.value);
-        if (!isNaN(p) && p >= 0) item.price = p;
+        if (!isNaN(p) && p >= 0) {
+          item.price = p;
+        } else {
+          flagInvalidEdit(input);
+          return;
+        }
       } else if (field === "qty") {
         item.qty = input.value.trim();
       } else {
         var n = input.value.trim();
-        if (n) item.name = n;
+        if (n) {
+          item.name = n;
+        } else {
+          flagInvalidEdit(input);
+          return;
+        }
+      }
+      save();
+      render();
+    }
+
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); input.blur(); }
+      if (ev.key === "Escape") { ev.preventDefault(); render(); }
+    });
+  }
+
+  function startDateEdit(e) {
+    var btn = e.currentTarget;
+    var row = btn.closest(".item-row");
+    var id = parseInt(row.getAttribute("data-id"), 10);
+    var item = items.find(function (it) { return it.id === id; });
+    if (!item) return;
+
+    var input = document.createElement("input");
+    input.type = "date";
+    input.className = "edit-input date-edit-input";
+    input.value = item.date || todayKey();
+    btn.replaceWith(input);
+    input.focus();
+
+    function commit() {
+      var v = input.value;
+      if (v && v !== item.date) {
+        item.date = v;
+        delete collapsedDays[v]; // let the destination day re-evaluate its default expand state
       }
       save();
       render();
@@ -738,20 +840,79 @@
     markExported();
   });
 
+  jsonBtn.addEventListener("click", function () {
+    var backup = { items: items, nextId: nextId, exportedAt: new Date().toISOString() };
+    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "kost-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    markExported();
+  });
+
+  importBtn.addEventListener("click", function () { importFile.click(); });
+
+  importFile.addEventListener("change", function () {
+    var file = importFile.files && importFile.files[0];
+    importFile.value = ""; // reset so re-selecting the same file fires change again
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var parsed = JSON.parse(reader.result);
+        if (!parsed || !Array.isArray(parsed.items)) throw new Error("bad shape");
+        if (items.length && !confirm("Import will replace all " + items.length + " current item(s) with the backup. Continue?")) return;
+        items = parsed.items;
+        nextId = parsed.nextId || (items.reduce(function (m, it) { return Math.max(m, it.id); }, 0) + 1);
+        collapsedDays = {};
+        saveCollapse();
+        save();
+        render();
+      } catch (e) {
+        alert("That file doesn't look like a valid KOsT backup.");
+      }
+    };
+    reader.readAsText(file);
+  });
+
   pdfBtn.addEventListener("click", function () {
-    var openGroups = Object.keys(collapsedDays).filter(function (k) { return collapsedDays[k]; });
-    openGroups.forEach(function (k) { collapsedDays[k] = false; });
+    var snapshot = Object.assign({}, collapsedDays);
+    Object.keys(collapsedDays).forEach(function (k) { collapsedDays[k] = false; });
     render();
+    function restore() {
+      window.removeEventListener("afterprint", restore);
+      collapsedDays = snapshot;
+      saveCollapse();
+      render();
+    }
+    window.addEventListener("afterprint", restore);
     window.print();
     markExported();
   });
 
   themeBtn.addEventListener("click", function () {
     theme = theme === "light" ? "dark" : "light";
+    themeIsManual = true;
     document.body.setAttribute("data-theme", theme);
     themeIcon.innerHTML = theme === "light" ? MOON : SUN;
     try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* ignore */ }
   });
+
+  if (window.matchMedia) {
+    var osThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    var handleOsThemeChange = function (ev) {
+      if (themeIsManual) return; // user has an explicit preference — don't override it
+      theme = ev.matches ? "dark" : "light";
+      document.body.setAttribute("data-theme", theme);
+      themeIcon.innerHTML = theme === "light" ? MOON : SUN;
+    };
+    if (osThemeQuery.addEventListener) osThemeQuery.addEventListener("change", handleOsThemeChange);
+    else if (osThemeQuery.addListener) osThemeQuery.addListener(handleOsThemeChange); // older Safari
+  }
 
   document.getElementById("todayLabel").textContent = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
