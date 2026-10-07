@@ -86,6 +86,16 @@ body{padding:0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .cmp{font-size:12px}#fPrice{width:140px}
 @media(hover:none){.x{opacity:1;font-size:22px;min-width:36px;min-height:36px}}
 @media print{.day{position:static}.row.fl{animation:none}}
+.row.eding{display:block;padding:14px 16px;background:var(--bg)}
+.edp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;align-items:end}
+.edp label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--soft)}
+.edp .ed{font-size:14px;padding:7px 9px;color:var(--ink)}.edp .wide{grid-column:1/-1}
+.edp option{background:var(--sf);color:var(--ink)}
+.edt{grid-column:1/-1;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.edt b{color:var(--ac);font-size:16px}.edt small{color:var(--bad);font-size:12px}
+.sv{background:var(--ac);color:var(--sf);border:0;border-radius:6px;padding:8px 18px;font-weight:600}
+.cn{border:1px solid var(--line);background:none;border-radius:6px;padding:8px 14px}
+#fNote{flex:1 1 120px}
 </style>
 </head>
 <body>
@@ -123,8 +133,9 @@ body{padding:0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     <input type="date" id="fDate" aria-label="Date">
     <input id="fName" list="names" placeholder="What did you spend on? (try: chai 20 upi)" aria-label="Item">
     <datalist id="names"></datalist>
-    <input id="fQty" placeholder="Qty" title="A number multiplies the price (2). Text is only a note (2kg)" aria-label="Quantity">
-    <input id="fPrice" class="num" type="text" inputmode="decimal" placeholder="Amount (40+80 ok)" aria-label="Amount">
+    <input id="fQty" type="number" min="0" step="any" inputmode="decimal" placeholder="Qty" title="Quantity. Leave empty for 1. Total = qty × price each" aria-label="Quantity">
+    <input id="fNote" placeholder="Note (optional)" aria-label="Note">
+    <input id="fPrice" class="num" type="text" inputmode="decimal" placeholder="Price each (40+80 ok)" aria-label="Amount">
     <select id="fCat" aria-label="Category"></select>
     <select id="fPay" aria-label="Paid via"></select>
     <button id="addBtn">Add</button>
@@ -179,8 +190,9 @@ function load(){try{
   if(t==="dark"||t==="light")theme=t;else if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)theme="dark";
   budget=+localStorage.getItem(BK)||0;
 }catch(e){}
-items.forEach(function(i){i.date=i.date||today()});}
+items.forEach(function(i){i.date=i.date||today();norm(i)});}
 
+function norm(i){i.qty=String(i.qty||"").trim();i.note=String(i.note||"");if(i.qty&&!mult(i.qty)){i.note=i.note||i.qty;i.qty=""}}
 function opts(list,cur,lab){
   if(list.indexOf(cur)<0)list=[cur].concat(list);
   return list.map(function(v){return '<option value="'+esc(v)+'"'+(v===cur?" selected":"")+'>'+esc(lab?lab(v):v)+'</option>'}).join("");
@@ -220,16 +232,16 @@ function render(){
   $("months").innerHTML=scope==="month"?"":mk.map(function(m){return '<button class="cb" data-month="'+m+'"><span class="cn">'+pd(m+"-01").toLocaleDateString("en-IN",{month:"short",year:"numeric"})+'</span><span class="bt"><i style="width:'+bm[m]/mx*100+'%;background:var(--ac)"></i></span><span class="num cv">'+fmt(bm[m])+' <small>'+Math.round(tot?bm[m]/tot*100:0)+'%</small></span></button>'}).join("");
   Array.prototype.forEach.call($("seg").children,function(x){x.classList.toggle("on",x.dataset.s===scope)});
   $("prev").style.display=$("next").style.display=scope==="all"?"none":"";
-  var sh=mi.filter(function(i){return (!fCat||cat(i)===fCat)&&(!fPay||pay(i)===fPay)&&(!q||(i.name+" "+cat(i)+" "+plabel(pay(i))).toLowerCase().indexOf(q)>-1)});
+  var sh=mi.filter(function(i){return (!fCat||cat(i)===fCat)&&(!fPay||pay(i)===fPay)&&(!q||(i.name+" "+(i.note||"")+" "+cat(i)+" "+plabel(pay(i))).toLowerCase().indexOf(q)>-1)});
   var g={};sh.forEach(function(i){(g[i.date]=g[i.date]||[]).push(i)});
   $("list").innerHTML=Object.keys(g).sort().reverse().map(function(d){
     var l=g[d],t=d===today()?" · Today":"";
     return '<div class="day"><span>'+pd(d).toLocaleDateString("en-IN",scope==="month"?{weekday:"short",day:"numeric",month:"short"}:{weekday:"short",day:"numeric",month:"short",year:"numeric"})+t+'</span><span class="num">'+fmt(sum(l))+'</span></div>'+
     l.map(function(i){var m=mult(i.qty),c=cat(i);
-      return '<div class="row'+(i.id===flashId?" fl":"")+'" data-id="'+i.id+'"><span class="nm" data-f="name" role="button" tabindex="0" title="Click to edit">'+esc(i.name)+(i.qty&&!m?' <small>'+esc(i.qty)+'</small>':'')+'</span>'+
+      return '<div class="row'+(i.id===flashId?" fl":"")+'" data-id="'+i.id+'"><span class="nm" data-f="name" role="button" tabindex="0" title="Click to edit this expense">'+esc(i.name)+(i.note?' <small>'+esc(i.note)+'</small>':'')+'</span>'+
       '<select class="chip" data-f="cat" aria-label="Category" style="background:'+(CATS[c]||CATS.Other)+'">'+opts(CATLIST,c)+'</select>'+
       '<select class="pay" data-f="pay" aria-label="Paid via">'+opts(PAYLIST,pay(i),plabel)+'</select>'+
-      '<span class="num amt" data-f="price" role="button" tabindex="0" title="Click to edit unit price">'+fmt(lt(i))+(m?'<small>'+m+' × '+fmt(i.price)+'</small>':'')+'</span>'+
+      '<span class="num amt" data-f="price" role="button" tabindex="0" title="Click to edit this expense">'+fmt(lt(i))+(m?'<small>'+m+' × '+fmt(i.price)+'</small>':'')+'</span>'+
       '<button class="x" data-del="'+i.id+'" aria-label="Remove '+esc(i.name)+'">×</button></div>'}).join("");
   }).join("")||'<div class="empty">'+(mi.length?"No expenses match these filters.":"No expenses "+(scope==="all"?"yet":"in "+label+" yet")+". Add one above.")+'</div>';
   var f=fCat||fPay||q;
@@ -266,42 +278,51 @@ function add(){
   if(!pr){var m=name.match(/^(.+?)\s+([\d.+\-*/()]+)(?:\s+(cash|upi|card|net banking))?$/i);if(m){name=m[1];pr=m[2];if(m[3])pv=PAYS.filter(function(p){return p.toLowerCase()===m[3].toLowerCase()})[0]}}
   var price=calc(pr);
   if(!name||isNaN(price)){(!name?$("fName"):$("fPrice")).focus();toast(!name?"Enter an item name":"Enter an amount, like 120 or 40+80",false);return}
-  var id=nextId++;items.push({id:id,name:name,price:price,qty:$("fQty").value.trim(),date:date,cat:$("fCat").value,pay:pv});
+  var id=nextId++;items.push({id:id,name:name,price:price,qty:$("fQty").value.trim(),note:$("fNote").value.trim(),date:date,cat:$("fCat").value,pay:pv});
   var vis=scope==="all"||date.indexOf(scope==="year"?view.slice(0,4):view)===0;
   flashId=id;if(!vis)toast("Added to "+pd(date).toLocaleDateString("en-IN",{month:"short",year:"numeric"}),false);
-  $("fName").value=$("fQty").value=$("fPrice").value="";$("fName").focus();
+  $("fName").value=$("fQty").value=$("fPrice").value=$("fNote").value="";$("fName").focus();
   save();render();
 }
 $("addBtn").onclick=add;
-["fName","fQty","fPrice"].forEach(function(i){$(i).onkeydown=function(e){if(e.key==="Enter")add()}});
+["fName","fQty","fNote","fPrice"].forEach(function(i){$(i).onkeydown=function(e){if(e.key==="Enter")add()}});
 
 function toast(m,u){$("tmsg").textContent=m;$("undo").hidden=!u;$("toast").classList.add("show");clearTimeout(tt);tt=setTimeout(function(){$("toast").classList.remove("show");if(u)last=null},u?8000:3000)}
 // list: edit / delete
 function get(el){var r=el.closest(".row");return items.filter(function(i){return i.id==r.dataset.id})[0]}
 function edit(s){
-  var it=get(s),f=s.dataset.f,done=false;
-  if(f==="name"){
-    var w=document.createElement("div");w.className="edw";
-    w.innerHTML='<input class="ed" data-k="name" aria-label="Item" value="'+esc(it.name)+'"><input class="ed" data-k="qty" aria-label="Qty or note" placeholder="Qty/note" value="'+esc(it.qty||"")+'"><input class="ed" data-k="date" type="date" aria-label="Date" value="'+esc(it.date)+'">';
-    s.textContent="";s.appendChild(w);var a=w.firstChild;a.focus();a.select();
-    var fin=function(){if(done)return;done=true;var v=function(k){return w.querySelector('[data-k='+k+']').value.trim()};
-      if(v("name"))it.name=v("name");it.qty=v("qty");if(v("date"))it.date=v("date");save();render()};
-    w.onfocusout=function(e){if(!w.contains(e.relatedTarget))fin()};
-    w.onkeydown=function(e){if(e.key==="Enter")fin();if(e.key==="Escape"){done=true;render()}};
-    return}
-  var inp=document.createElement("input");inp.className="ed num";inp.type="text";inp.setAttribute("inputmode","decimal");inp.value=it.price;
-  s.textContent="";s.appendChild(inp);inp.focus();inp.select();
-  inp.onblur=function(){if(done)return;done=true;var p=calc(inp.value);if(!isNaN(p))it.price=p;save();render()};
-  inp.onkeydown=function(e){if(e.key==="Enter")inp.blur();if(e.key==="Escape"){done=true;render()}};
+  var row=s.closest(".row"),id=row.dataset.id,focus=s.dataset.f==="price"?"price":"name";
+  if($("list").querySelector(".edp")){render();row=$("list").querySelector('[data-id="'+id+'"]')}
+  var it=get(row),k=function(n){return row.querySelector('[data-k='+n+']')};
+  row.classList.add("eding");
+  row.innerHTML='<div class="edp">'+
+    '<label class="wide">Item<input class="ed" data-k="name" value="'+esc(it.name)+'"></label>'+
+    '<label>Quantity<input class="ed num" data-k="qty" type="number" min="0" step="any" inputmode="decimal" placeholder="1" value="'+esc(it.qty||"")+'"></label>'+
+    '<label>Price each (₹)<input class="ed num" data-k="price" inputmode="decimal" value="'+it.price+'"></label>'+
+    '<label>Note<input class="ed" data-k="note" placeholder="e.g. 2 kg, for office" value="'+esc(it.note||"")+'"></label>'+
+    '<label>Date<input class="ed" data-k="date" type="date" value="'+esc(it.date)+'"></label>'+
+    '<label>Category<select class="ed" data-k="cat">'+opts(CATLIST,cat(it))+'</select></label>'+
+    '<label>Paid via<select class="ed" data-k="pay">'+opts(PAYLIST,pay(it),plabel)+'</select></label>'+
+    '<div class="edt"><span>Total <b class="num" id="edTot"></b> <small id="edErr"></small></span><span><button class="cn">Cancel</button> <button class="sv">Save</button></span></div></div>';
+  function upd(){var q=parseFloat(k("qty").value),p=calc(k("price").value),m=q>0?q:1;$("edTot").textContent=isNaN(p)?"—":(m!==1?m+" × "+fmt(p)+" = ":"")+fmt(r2(m*p))}
+  function commit(){var p=calc(k("price").value),n=k("name").value.trim();
+    if(!n){$("edErr").textContent="Enter an item name";k("name").focus();return}
+    if(isNaN(p)){$("edErr").textContent="Enter the price for one, like 50 or 20+30";k("price").focus();return}
+    var q=parseFloat(k("qty").value);
+    it.name=n;it.price=p;it.qty=q>0?String(q):"";it.note=k("note").value.trim();it.date=k("date").value||it.date;it.cat=k("cat").value;it.pay=k("pay").value;save();render()}
+  row.oninput=upd;
+  row.onkeydown=function(e){if(e.key==="Enter"&&e.target.tagName!=="BUTTON"){e.preventDefault();commit()}if(e.key==="Escape")render()};
+  row.querySelector(".sv").onclick=commit;row.querySelector(".cn").onclick=function(){render()};
+  upd();k(focus).focus();k(focus).select();
 }
 $("list").onclick=function(e){
   var d=e.target.closest("[data-del]");
   if(d){var id=+d.dataset.del,ix=items.findIndex(function(i){return i.id===id});last={item:items[ix],ix:ix};items.splice(ix,1);save();render();
     toast('"'+last.item.name.slice(0,24)+'" removed',true);return}
-  var s=e.target.closest("span[data-f]");if(s&&!s.querySelector("input"))edit(s);
+  var s=e.target.closest("span[data-f]");if(s)edit(s);
 };
 $("list").onkeydown=function(e){var s=e.target;if(e.key==="Enter"&&s.matches&&s.matches("span[data-f]")&&!s.querySelector("input")){e.preventDefault();edit(s)}};
-$("list").onchange=function(e){var s=e.target;if(s.tagName!=="SELECT")return;get(s)[s.dataset.f]=s.value;save();render()};
+$("list").onchange=function(e){var s=e.target;if(s.tagName!=="SELECT"||!s.dataset.f)return;get(s)[s.dataset.f]=s.value;save();render()};
 $("undo").onclick=function(){if(!last)return;items.splice(Math.min(last.ix,items.length),0,last.item);last=null;$("toast").classList.remove("show");save();render()};
 
 document.addEventListener("keydown",function(e){var t=e.target;if((t&&/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))||e.ctrlKey||e.metaKey||e.altKey)return;if(e.key==="n"){e.preventDefault();$("fName").focus()}else if(e.key==="/"){e.preventDefault();$("q").focus()}});
@@ -309,9 +330,9 @@ document.addEventListener("keydown",function(e){var t=e.target;if((t&&/^(INPUT|S
 function dl(text,type,name){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:type}));a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href)},500)}
 $("csv").onclick=function(){
   var src=shownList;if(!src.length){toast("Nothing to export in this view",false);return}
-  var rows=[["Date","Item","Qty","Unit price","Category","Paid via","Line total"]];
-  src.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0}).forEach(function(i){rows.push([i.date,i.name,i.qty||"",i.price.toFixed(2),cat(i),plabel(pay(i)),lt(i).toFixed(2)])});
-  rows.push([],["","","","","","Total",sum(src).toFixed(2)]);
+  var rows=[["Date","Item","Qty","Unit price","Note","Category","Paid via","Line total"]];
+  src.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0}).forEach(function(i){rows.push([i.date,i.name,i.qty||"",i.price.toFixed(2),i.note||"",cat(i),plabel(pay(i)),lt(i).toFixed(2)])});
+  rows.push([],["","","","","","","Total",sum(src).toFixed(2)]);
   var cs=function(c){c=String(c);if(/^[=+\-@\t\r]/.test(c)&&isNaN(+c))c="'"+c;return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c};
   dl("\ufeff"+rows.map(function(r){return r.map(cs).join(",")}).join("\n"),"text/csv;charset=utf-8","kost-"+today()+".csv");
 };
@@ -321,13 +342,13 @@ $("res").onclick=function(){$("file").click()};
 $("file").onchange=function(){
   var f=this.files[0];this.value="";if(!f)return;var r=new FileReader();
   r.onload=function(){try{var p=JSON.parse(r.result);if(!p||!Array.isArray(p.items))throw 0;
-    var ok=p.items.map(function(i){var pr=+i.price;return {id:0,name:String(i.name||"").slice(0,200),price:isFinite(pr)?pr:0,qty:String(i.qty||""),date:/^\d{4}-\d{2}-\d{2}$/.test(i.date)?i.date:today(),cat:i.cat?String(i.cat):"",pay:i.pay?String(i.pay):""}}).filter(function(i){return i.name});
+    var ok=p.items.map(function(i){var pr=+i.price;return {id:0,name:String(i.name||"").slice(0,200),price:isFinite(pr)?pr:0,qty:String(i.qty||""),note:String(i.note||""),date:/^\d{4}-\d{2}-\d{2}$/.test(i.date)?i.date:today(),cat:i.cat?String(i.cat):"",pay:i.pay?String(i.pay):""}}).filter(function(i){return i.name});
     if(!ok.length)throw 0;
     var merge=items.length&&confirm("Merge "+ok.length+" imported expense(s) into your "+items.length+" current ones?\n\nOK = Merge   Cancel = choose Replace");
     if(items.length&&!merge&&!confirm("Replace your "+items.length+" current expense(s) with the backup?"))return;
     if(!merge)items=[];
     var kf=function(i){return [i.date,i.name,i.price,i.qty,i.cat,i.pay].join("|")},have={};items.forEach(function(i){have[kf(i)]=1});
-    ok.forEach(function(i){if(have[kf(i)])return;i.id=nextId++;items.push(i)});save();render()}
+    ok.forEach(function(i){if(have[kf(i)])return;norm(i);i.id=nextId++;items.push(i)});save();render()}
     catch(e){alert("That doesn't look like a KOsT backup file.")}};
   r.readAsText(f);
 };
